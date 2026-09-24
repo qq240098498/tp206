@@ -2,10 +2,12 @@ const { AppError } = require('./errors');
 const store = require('./store');
 const water = require('./water');
 const reservoirs = require('./reservoirs');
+const exceedances = require('./exceedances');
 
 // 水位记录
 function listLevels(data, query) {
   const q = query || {};
+  const eventIndex = exceedances.levelEventIndex(data);
   let rows = data.levels.slice();
   if (q.reservoirId) rows = rows.filter((l) => l.reservoirId === q.reservoirId);
   if (q.from) rows = rows.filter((l) => l.date >= q.from);
@@ -26,6 +28,7 @@ function listLevels(data, query) {
         floodSeason: check ? check.floodSeason : false,
         inflow,
         warning: warning ? warning.level : '',
+        eventKey: eventIndex[l.id] || '',
       });
     })
     .sort((a, b) => (a.date === b.date ? (a.reservoirId < b.reservoirId ? -1 : 1) : a.date < b.date ? 1 : -1));

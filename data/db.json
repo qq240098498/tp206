@@ -8,7 +8,8 @@
     "lossPerDayWan": 1.2,
     "levelPrecision": 0.01,
     "inflowAttentionFlow": 120,
-    "inflowSeriousFlow": 260
+    "inflowSeriousFlow": 260,
+    "exceedanceGapHours": 48
   },
   "reservoirs": [
     {
@@ -1818,6 +1819,20 @@
           "at": "2026-05-05"
         }
       ]
+    }
+  ],
+  "exceedanceHandlings": [
+    {
+      "id": "exh-0001",
+      "eventKey": "ex@res-0001@2026-09-08 08:00",
+      "reservoirId": "res-0001",
+      "createdAt": "2026-09-24",
+      "reason": "123",
+      "measure": "312",
+      "handler": "213",
+      "handledAt": "2026-09-24 21:42",
+      "handleRemark": "213",
+      "review": null
     }
   ]
 }

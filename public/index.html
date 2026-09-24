@@ -25,6 +25,7 @@
   <button type="button" class="tab is-active" data-view="overview">概览</button>
   <button type="button" class="tab" data-view="reservoirs">水库</button>
   <button type="button" class="tab" data-view="water">水位与流量</button>
+  <button type="button" class="tab" data-view="exceedances">超限处置</button>
   <button type="button" class="tab" data-view="orders">调度指令</button>
   <button type="button" class="tab" data-view="balance">水量平衡</button>
 </nav>
@@ -310,6 +311,41 @@
           </table>
         </div>
       </section>
+    </section>
+
+    <section class="view" data-view="exceedances">
+      <div class="view-head">
+        <div>
+          <h2>超限处置</h2>
+          <p class="view-sub">连续超限的测报按「水库 + 起报时刻」归并成一次超限事件，字段全部取 <code>GET /api/exceedances</code>。每行给出起报时刻、水位、限水位、超出量与汛期/非汛期判定依据；展开后登记超限原因、处置措施、处置时刻与处置人，并对照处置前后水位与回落时刻，最后复核闭环。</p>
+        </div>
+        <div class="view-actions">
+          <span class="pill" id="exceedanceCount">共 0 次</span>
+          <button type="button" class="btn btn-ghost" data-action="reload" data-view="exceedances">刷新</button>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table class="table" id="exceedanceTable">
+          <thead>
+            <tr>
+              <th>水库</th>
+              <th>起报时刻</th>
+              <th class="num">起报水位</th>
+              <th class="num">限水位</th>
+              <th class="num">起报超出</th>
+              <th class="num">峰值水位</th>
+              <th class="num">峰值超出</th>
+              <th>判定依据</th>
+              <th>测点数</th>
+              <th>回落时刻</th>
+              <th class="num">处置前→后</th>
+              <th>处置状态</th>
+            </tr>
+          </thead>
+          <tbody id="exceedanceRows"></tbody>
+        </table>
+      </div>
     </section>
 
     <section class="view" data-view="orders">

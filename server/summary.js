@@ -1,6 +1,7 @@
 const store = require('./store');
 const water = require('./water');
 const records = require('./records');
+const exceedances = require('./exceedances');
 
 function overview(data) {
   const settings = data.settings;
@@ -44,6 +45,8 @@ function overview(data) {
     return reservoir ? water.levelCheck(reservoir, l.level, l.date, settings).exceeded : false;
   }).length;
 
+  const exceedanceStats = exceedances.counts(data);
+
   return {
     today,
     reservoirCount: data.reservoirs.length,
@@ -51,6 +54,10 @@ function overview(data) {
     reservoirs,
     levelCount: data.levels.length,
     exceededCount,
+    exceedanceCount: exceedanceStats.exceedanceCount,
+    exceedanceOpenCount: exceedanceStats.exceedanceOpenCount,
+    exceedanceUnhandledCount: exceedanceStats.exceedanceUnhandledCount,
+    exceedanceClosedCount: exceedanceStats.exceedanceClosedCount,
     orderCount: data.orders.length,
     orderStatusCount,
     activeOrders: orders.filter((o) => o.status === '已下达' || o.status === '执行中').length,

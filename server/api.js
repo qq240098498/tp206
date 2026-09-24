@@ -5,6 +5,7 @@ const reservoirs = require('./reservoirs');
 const records = require('./records');
 const water = require('./water');
 const summary = require('./summary');
+const exceedances = require('./exceedances');
 
 const router = express.Router();
 
@@ -59,6 +60,23 @@ router.patch('/orders/:id', withData((data, req) => ({ __save: true, __body: rec
 router.post('/orders/:id/copy', withData((data, req) => ({ __save: true, __body: records.copyOrder(data, req.params.id, req.body) })));
 router.post('/orders/:id/attachments', withData((data, req) => ({ __save: true, __body: records.addAttachment(data, req.params.id, req.body || {}) })));
 router.delete('/orders/:id', withData((data, req) => ({ __save: true, __body: records.removeOrder(data, req.params.id) })));
+
+// 超限处置：事件由水位记录现算，处置单与复核落库
+router.get('/exceedances', withData((data, req) => exceedances.list(data, req.query)));
+router.get('/exceedances/:eventKey', withData((data, req) => {
+  const rows = exceedances.list(data, {});
+  const found = rows.find((r) => r.eventKey === req.params.eventKey);
+  if (!found) throw new AppError(404, 'EXCEEDANCE_NOT_FOUND', '这次超限不存在或已重新归并');
+  return found;
+}));
+router.post('/exceedances/:eventKey/handling', withData((data, req) => ({
+  __save: true,
+  __body: exceedances.registerHandling(data, req.params.eventKey, req.body || {}),
+})));
+router.post('/exceedances/:eventKey/review', withData((data, req) => ({
+  __save: true,
+  __body: exceedances.reviewHandling(data, req.params.eventKey, req.body || {}),
+})));
 
 router.get('/balance', withData((data, req) => {
   const { reservoirId, from, to } = req.query;

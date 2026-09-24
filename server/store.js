@@ -14,12 +14,13 @@ const DEFAULT_SETTINGS = {
   levelPrecision: 0.01,
   inflowAttentionFlow: 120,
   inflowSeriousFlow: 260,
+  exceedanceGapHours: 48,
 };
 
 function normalize(raw) {
   const data = raw && typeof raw === 'object' ? raw : {};
   data.settings = Object.assign({}, DEFAULT_SETTINGS, data.settings || {});
-  for (const key of ['reservoirs', 'curves', 'levels', 'inflows', 'releases', 'orders']) {
+  for (const key of ['reservoirs', 'curves', 'levels', 'inflows', 'releases', 'orders', 'exceedanceHandlings']) {
     if (!Array.isArray(data[key])) data[key] = [];
   }
   return data;
