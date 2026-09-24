@@ -5,6 +5,7 @@ const reservoirs = require('./reservoirs');
 const records = require('./records');
 const water = require('./water');
 const summary = require('./summary');
+const exceedances = require('./exceedances');
 
 const router = express.Router();
 
@@ -47,6 +48,11 @@ router.put('/reservoirs/:id/curve', withData((data, req) => ({ __save: true, __b
 router.get('/levels', withData((data, req) => records.listLevels(data, req.query)));
 router.post('/levels', withData((data, req) => ({ __save: true, __body: records.saveLevel(data, req.body || {}) })));
 router.delete('/levels/:id', withData((data, req) => ({ __save: true, __body: records.removeLevel(data, req.params.id) })));
+
+router.get('/exceedances', withData((data, req) => exceedances.list(data, req.query)));
+router.get('/exceedances/:levelId', withData((data, req) => exceedances.detail(data, req.params.levelId)));
+router.put('/exceedances/:levelId/handling', withData((data, req) => ({ __save: true, __body: exceedances.saveHandling(data, req.params.levelId, req.body || {}) })));
+router.put('/exceedances/:levelId/review', withData((data, req) => ({ __save: true, __body: exceedances.saveReview(data, req.params.levelId, req.body || {}) })));
 
 router.get('/flows', withData((data, req) => records.listFlows(data, req.query.kind === 'release' ? 'release' : 'inflow', req.query)));
 router.post('/flows', withData((data, req) => ({ __save: true, __body: records.saveFlow(data, req.body && req.body.kind === 'release' ? 'release' : 'inflow', req.body || {}) })));

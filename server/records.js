@@ -61,6 +61,8 @@ function removeLevel(data, id) {
   const found = data.levels.find((l) => l.id === id);
   if (!found) throw new AppError(404, 'LEVEL_NOT_FOUND', '这条水位记录不存在');
   data.levels = data.levels.filter((l) => l.id !== id);
+  // 这条水位对应的超限处置登记也一并清掉
+  data.exceedances = (data.exceedances || []).filter((x) => x.levelId !== id);
   return { removed: id };
 }
 

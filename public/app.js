@@ -6,9 +6,10 @@
 
   /* ================= 常量与工具 ================= */
 
-  var VIEW_IDS = ['overview', 'reservoirs', 'water', 'orders', 'balance'];
+  var VIEW_IDS = ['overview', 'reservoirs', 'water', 'exceedances', 'orders', 'balance'];
   var ORDER_STATUSES = ['已下达', '执行中', '已完成', '已撤销'];
   var RESERVOIR_STATUSES = ['运行', '检修'];
+  var EXCEEDANCE_STATUSES = ['待处置', '处置中', '待复核', '已闭环', '已复核待回落'];
 
   function el(id) { return document.getElementById(id); }
   function qs(sel, root) { return (root || document).querySelector(sel); }
@@ -44,6 +45,11 @@
   function todayIso() {
     var d = new Date();
     return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+
+  function nowLocal() {
+    var d = new Date();
+    return todayIso() + 'T' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
   }
 
   function queryString(params) {
@@ -126,9 +132,11 @@
     reservoirs: [],
     levels: [],
     flows: { inflow: [], release: [] },
+    exceedances: [],
+    exceedanceDetail: null,
     orders: [],
     balance: null,
-    expanded: { reservoir: '', level: '', flow: '', order: '' },
+    expanded: { reservoir: '', level: '', flow: '', order: '', exceedance: '' },
     reservoirDetail: null,
     curveDraft: null,
     curveQuery: { reservoirId: '', byLevel: null, byCapacity: null },
@@ -136,6 +144,7 @@
       overview: { status: '' },
       reservoirs: { basin: '', status: '', keyword: '' },
       water: { reservoirId: '', from: '', to: '' },
+      exceedances: { reservoirId: '', status: '', from: '', to: '' },
       orders: { reservoirId: '', status: '' },
       balance: { reservoirId: '', from: '2026-05-01', to: '2026-05-10' }
     }
@@ -240,6 +249,8 @@
       } else if (view === 'water') {
         await loadWaterRecords();
         renderWater();
+      } else if (view === 'exceedances') {
+        await reloadExceedances();
       } else if (view === 'orders') {
         state.orders = await api('GET', '/api/orders' + ordersQuery());
         renderOrders();
@@ -349,6 +360,21 @@
       html.push('<button type="button" class="btn btn-ghost btn-sm" data-action="reset-filter" data-scope="water">重置筛选</button>');
       html.push('</div>');
       html.push('<div class="side-block"><h3>当前口径</h3><ul class="side-list" id="waterCounts">' + waterCountsHtml() + '</ul></div>');
+    } else if (view === 'exceedances') {
+      html.push('<div class="side-block">');
+      html.push('<h3>筛选超限处置</h3>');
+      html.push('<label class="field"><span>水库</span><select data-filter-key="reservoirId" data-filter-scope="exceedances">' + reservoirOptions(f.reservoirId) + '</select></label>');
+      html.push('<label class="field"><span>处置状态</span><select data-filter-key="status" data-filter-scope="exceedances">' + stringOptions(['未闭环'].concat(EXCEEDANCE_STATUSES), f.status, '全部状态') + '</select></label>');
+      html.push('<label class="field"><span>起始日期</span><input type="date" data-filter-key="from" data-filter-scope="exceedances" value="' + esc(f.from || '') + '" /></label>');
+      html.push('<label class="field"><span>结束日期</span><input type="date" data-filter-key="to" data-filter-scope="exceedances" value="' + esc(f.to || '') + '" /></label>');
+      html.push('<button type="button" class="btn btn-ghost btn-sm" data-action="reset-filter" data-scope="exceedances">重置筛选</button>');
+      html.push('</div>');
+      html.push('<div class="side-block"><h3>口径</h3><ul class="side-list">');
+      html.push('<li>限水位：汛期取汛限、非汛期取正常蓄水位（接口给出）</li>');
+      html.push('<li>回落 = 之后第一次出现不超限的水位记录</li>');
+      html.push('<li>闭环 = 已登记处置 + 水位回落 + 已复核</li>');
+      html.push('<li>状态与对照数字都取接口字段</li>');
+      html.push('</ul></div>');
     } else if (view === 'orders') {
       html.push('<div class="side-block">');
       html.push('<h3>筛选调度指令</h3>');
@@ -412,7 +438,9 @@
         metricCard('水库数', s.reservoirCount, '点卡去「水库」标签', 'reservoirs', ''),
         metricCard('运行中', s.runningCount, '点卡带状态筛选去「水库」', 'reservoirs', 'status=运行'),
         metricCard('水位记录数', s.levelCount, '点卡去「水位与流量」', 'water', 'kind=level'),
-        metricCard('超限记录数', s.exceededCount, '点卡去「水位与流量」逐条核对', 'water', 'kind=level', true),
+        metricCard('超限记录数', s.exceededCount, '点卡去「超限处置」逐条登记', 'exceedances', '', true),
+        metricCard('未闭环超限', s.exceededOpenCount, '还没闭环的超限，点卡去处置', 'exceedances', 'status=未闭环', true),
+        metricCard('待处置超限', s.exceededPendingCount, '还没登记原因与措施', 'exceedances', 'status=待处置', true),
         metricCard('指令数', s.orderCount, '点卡去「调度指令」', 'orders', ''),
         metricCard('执行中加已下达', active, '执行中与已下达合计', 'orders', ''),
         metricCard('偏差超限指令数', s.orderDeviationCount, '偏差绝对值大于 5 的指令', 'orders', '', true),
@@ -705,6 +733,213 @@
     tbody.innerHTML = html.length ? html.join('') : emptyRow(colspan, rows.length ? '没有符合筛选的流量记录。' : '数据还在加载…');
   }
 
+  /* ================= 超限处置 ================= */
+
+  function exceedanceQuery() {
+    var f = state.filters.exceedances;
+    return queryString({ reservoirId: f.reservoirId, status: f.status, from: f.from, to: f.to });
+  }
+
+  /* 列表与展开行的详情都刷新；展开行详情走 GET /api/exceedances/:levelId */
+  async function reloadExceedances() {
+    state.exceedances = await api('GET', '/api/exceedances' + exceedanceQuery());
+    if (state.expanded.exceedance) {
+      try {
+        state.exceedanceDetail = await api('GET', '/api/exceedances/' + encodeURIComponent(state.expanded.exceedance));
+      } catch (err) {
+        state.exceedanceDetail = null;
+        state.expanded.exceedance = '';
+      }
+    }
+    renderExceedances();
+  }
+
+  function excStatusTag(status) {
+    var cls = 'tag';
+    if (status === '待处置') cls = 'tag is-over';
+    else if (status === '处置中') cls = 'tag is-warn';
+    else if (status === '待复核') cls = 'tag is-strong';
+    else if (status === '已闭环') cls = 'tag is-ok';
+    else if (status === '已复核待回落') cls = 'tag is-warn';
+    return '<span class="' + cls + '">' + esc(dash(status)) + '</span>';
+  }
+
+  function renderExceedances() {
+    var rows = state.exceedances || [];
+    var tbody = el('exceedanceRows');
+    var colspan = columnCount('exceedanceRows');
+    el('exceedanceCount').textContent = '共 ' + rows.length + ' 条';
+    if (!rows.length) {
+      tbody.innerHTML = emptyRow(colspan, '没有符合筛选的超限记录。');
+      return;
+    }
+    var html = [];
+    rows.forEach(function (r) {
+      var expanded = state.expanded.exceedance === r.levelId;
+      html.push('<tr class="exceedance-row' + (expanded ? ' is-expanded' : '') + '" data-action="toggle-exceedance" data-level-id="' + esc(r.levelId) + '">'
+        + '<td>' + esc(dash(r.date)) + '</td>'
+        + '<td>' + esc(dash(r.time)) + '</td>'
+        + '<td>' + esc(dash(r.reservoirName)) + '</td>'
+        + '<td class="num">' + esc(numText(r.level)) + '</td>'
+        + '<td class="num">' + esc(numText(r.limit)) + '</td>'
+        + '<td class="num">' + esc(numText(r.over)) + '</td>'
+        + '<td>' + esc(dash(r.basis)) + '</td>'
+        + '<td>' + boolTag(r.recovered) + '</td>'
+        + '<td>' + excStatusTag(r.status) + '</td>'
+        + '<td><span class="tag">展开</span></td>'
+        + '</tr>');
+      if (expanded) html.push(exceedanceDetailHtml(r, colspan));
+    });
+    tbody.innerHTML = html.join('');
+  }
+
+  function exceedanceDetailHtml(r, colspan) {
+    var d = (state.exceedanceDetail && state.exceedanceDetail.levelId === r.levelId) ? state.exceedanceDetail : null;
+
+    var baseItems = [
+      ['水位记录编号', r.levelId],
+      ['处置登记编号', r.handlingId || '（还没登记）'],
+      ['水库', r.reservoirName],
+      ['超限时刻', r.date + ' ' + r.time],
+      ['水位', r.level],
+      ['限水位', r.limit],
+      ['超出', r.over],
+      ['判定依据', r.basis],
+      ['是否汛期', yesNo(r.floodSeason)],
+      ['处置状态', r.status]
+    ];
+
+    var compareItems = [
+      ['超限当时', r.level + '（' + r.date + ' ' + r.time + '，限 ' + r.limit + '）'],
+      ['处置后首次水位', r.afterHandling
+        ? r.afterHandling.level + '（' + r.afterHandling.date + ' ' + r.afterHandling.time + '，' + (r.afterHandling.exceeded ? '仍超限' : '已落回限内') + '）'
+        : (r.handled ? '—' : '登记处置后可见')],
+      ['最新水位', r.latestAfter
+        ? r.latestAfter.level + '（' + r.latestAfter.date + ' ' + r.latestAfter.time + '，' + (r.latestAfter.exceeded ? '仍超限' : '已落回限内') + '）'
+        : '—'],
+      ['是否落回限内', yesNo(r.recovered)],
+      ['回落时刻', r.recovery ? r.recovery.date + ' ' + r.recovery.time : '还没回落'],
+      ['回落水位', r.recovery ? r.recovery.level + '（限 ' + r.recovery.limit + '）' : '—'],
+      ['回落在处置之后', r.recoveredAfterHandling === null ? '—' : yesNo(r.recoveredAfterHandling)]
+    ];
+
+    var traceRows;
+    if (d && d.trace && d.trace.length) {
+      traceRows = d.trace.map(function (t) {
+        return '<tr><td>' + esc(t.date) + '</td><td>' + esc(t.time) + '</td>'
+          + '<td class="num">' + esc(numText(t.level)) + '</td>'
+          + '<td class="num">' + esc(numText(t.limit)) + '</td>'
+          + '<td class="num">' + esc(numText(t.over)) + '</td>'
+          + '<td>' + boolTag(t.exceeded) + '</td></tr>';
+      }).join('');
+    } else if (d) {
+      traceRows = '<tr><td colspan="6">这次超限之后还没有更新的水位记录。</td></tr>';
+    } else {
+      traceRows = '<tr><td colspan="6">正在载入回落过程…</td></tr>';
+    }
+
+    var handlingForm = '<div class="inline-form">'
+      + '<label class="field"><span>原因</span><input type="text" name="cause" data-exc-field="cause" value="' + esc(r.cause || '') + '" placeholder="上游强降雨，入库偏大" /><em class="field-msg" data-field-error="cause" hidden></em></label>'
+      + '<label class="field"><span>处置措施</span><input type="text" name="measures" data-exc-field="measures" value="' + esc(r.measures || '') + '" placeholder="开闸泄洪，加大下泄" /><em class="field-msg" data-field-error="measures" hidden></em></label>'
+      + '<label class="field"><span>处置时刻</span><input type="datetime-local" name="handledAt" data-exc-field="handledAt" value="' + esc(r.handledAt ? r.handledAt.replace(' ', 'T') : nowLocal()) + '" /><em class="field-msg" data-field-error="handledAt" hidden></em></label>'
+      + '<label class="field"><span>处置人</span><input type="text" name="handler" data-exc-field="handler" value="' + esc(r.handler || '') + '" placeholder="调度科 值班员" /><em class="field-msg" data-field-error="handler" hidden></em></label>'
+      + '<button type="button" class="btn btn-primary btn-sm" data-action="save-exc-handling" data-level-id="' + esc(r.levelId) + '">' + (r.handled ? '保存处置修改' : '登记处置') + '</button>'
+      + '</div>';
+
+    var reviewBlock;
+    if (!r.handled) {
+      reviewBlock = '<p class="empty">还没有登记处置：先在「处置登记」里登记原因与措施，再登记复核。</p>';
+    } else {
+      reviewBlock = '<div class="detail-grid">'
+        + itemHtml(['复核人', r.reviewedBy || '（还没复核）'])
+        + itemHtml(['复核时刻', r.reviewedAt || '—'])
+        + itemHtml(['复核结论', r.reviewNote || '—'])
+        + '</div>'
+        + '<div class="inline-form">'
+        + '<label class="field"><span>复核人</span><input type="text" name="reviewedBy" data-exc-review-field="reviewedBy" value="' + esc(r.reviewedBy || '') + '" placeholder="总工" /><em class="field-msg" data-field-error="reviewedBy" hidden></em></label>'
+        + '<label class="field"><span>复核时刻</span><input type="datetime-local" name="reviewedAt" data-exc-review-field="reviewedAt" value="' + esc(r.reviewedAt ? r.reviewedAt.replace(' ', 'T') : nowLocal()) + '" /><em class="field-msg" data-field-error="reviewedAt" hidden></em></label>'
+        + '<label class="field"><span>复核结论</span><input type="text" name="reviewNote" data-exc-review-field="reviewNote" value="' + esc(r.reviewNote || '') + '" placeholder="水位已回落，同意闭环" /><em class="field-msg" data-field-error="reviewNote" hidden></em></label>'
+        + '<button type="button" class="btn btn-primary btn-sm" data-action="save-exc-review" data-level-id="' + esc(r.levelId) + '">' + (r.reviewed ? '保存复核修改' : '登记复核') + '</button>'
+        + '</div>';
+    }
+
+    return '<tr class="detail-row" data-detail-for="' + esc(r.levelId) + '"><td colspan="' + colspan + '"><div class="detail" data-level-id="' + esc(r.levelId) + '">'
+      + '<h4>超限情况 <span class="card-sub">全部取接口字段</span></h4>'
+      + '<div class="detail-grid">' + baseItems.map(itemHtml).join('') + '</div>'
+
+      + '<h4>处置登记 <span class="card-sub">接口 <code>PUT /api/exceedances/:levelId/handling</code></span></h4>'
+      + handlingForm
+
+      + '<h4>处置前后水位对照与回落 <span class="card-sub">回落 = 之后第一次出现不超限的水位记录</span></h4>'
+      + '<div class="detail-grid">' + compareItems.map(itemHtml).join('') + '</div>'
+
+      + '<h4>回落过程 <span class="card-sub">接口 <code>GET /api/exceedances/:levelId</code> 的 trace，最多 40 条</span></h4>'
+      + '<table class="mini-table"><thead><tr><th>日期</th><th>时刻</th><th class="num">水位</th><th class="num">限水位</th><th class="num">超出</th><th>是否超限</th></tr></thead>'
+      + '<tbody>' + traceRows + '</tbody></table>'
+
+      + '<h4>复核登记 <span class="card-sub">接口 <code>PUT /api/exceedances/:levelId/review</code>；闭环 = 已登记处置 + 水位回落 + 已复核</span></h4>'
+      + reviewBlock
+
+      + '<div class="form-error" data-role="exc-error" hidden></div>'
+      + '</div></td></tr>';
+  }
+
+  async function toggleExceedance(levelId) {
+    if (state.expanded.exceedance === levelId) {
+      state.expanded.exceedance = '';
+      state.exceedanceDetail = null;
+      renderExceedances();
+      return;
+    }
+    await expandExceedance(levelId);
+  }
+
+  async function expandExceedance(levelId) {
+    state.expanded.exceedance = levelId;
+    state.exceedanceDetail = null;
+    renderExceedances();
+    try {
+      var detail = await api('GET', '/api/exceedances/' + encodeURIComponent(levelId));
+      if (state.expanded.exceedance !== levelId) return;
+      state.exceedanceDetail = detail;
+      renderExceedances();
+    } catch (err) {
+      showError(err);
+    }
+  }
+
+  function readExcFields(box, attr) {
+    var out = {};
+    qsa('[' + attr + ']', box).forEach(function (node) {
+      out[node.getAttribute(attr)] = node.value;
+    });
+    return out;
+  }
+
+  async function saveExcHandling(btn) {
+    var box = btn.closest('.detail');
+    var errorBox = qs('[data-role="exc-error"]', box);
+    try {
+      await api('PUT', '/api/exceedances/' + encodeURIComponent(btn.dataset.levelId) + '/handling', readExcFields(box, 'data-exc-field'));
+      toast('处置已登记');
+      await reloadExceedances();
+    } catch (err) {
+      showError(err, errorBox);
+    }
+  }
+
+  async function saveExcReview(btn) {
+    var box = btn.closest('.detail');
+    var errorBox = qs('[data-role="exc-error"]', box);
+    try {
+      await api('PUT', '/api/exceedances/' + encodeURIComponent(btn.dataset.levelId) + '/review', readExcFields(box, 'data-exc-review-field'));
+      toast('复核已登记');
+      await reloadExceedances();
+    } catch (err) {
+      showError(err, errorBox);
+    }
+  }
+
   /* ================= 调度指令 ================= */
 
   function ordersQuery() {
@@ -871,10 +1106,12 @@
       toast('设置已保存');
       state.summary = await api('GET', '/api/summary');
       state.levels = await api('GET', '/api/levels' + queryString({ reservoirId: state.filters.water.reservoirId, from: state.filters.water.from, to: state.filters.water.to }));
+      state.exceedances = await api('GET', '/api/exceedances' + exceedanceQuery());
       renderTopbar();
       renderSidebar();
       renderOverview();
       renderWater();
+      renderExceedances();
       renderBalance();
     } catch (err) {
       showError(err, el('modalError'));
@@ -1062,6 +1299,9 @@
     if (action === 'toggle-level') { toggleRow('level', btn.dataset.id); renderWater(); return; }
     if (action === 'toggle-flow') { toggleRow('flow', btn.dataset.kind + ':' + btn.dataset.id); renderWater(); return; }
     if (action === 'toggle-order') { toggleRow('order', btn.dataset.id); renderOrders(); return; }
+    if (action === 'toggle-exceedance') { await toggleExceedance(btn.dataset.levelId); return; }
+    if (action === 'save-exc-handling') { await saveExcHandling(btn); return; }
+    if (action === 'save-exc-review') { await saveExcReview(btn); return; }
 
     if (action === 'delete-level') {
       if (!armDelete(btn)) return;
@@ -1228,6 +1468,7 @@
       if (row.classList.contains('level-row')) { toggleRow('level', row.dataset.id); renderWater(); return; }
       if (row.classList.contains('flow-row')) { toggleRow('flow', row.dataset.kind + ':' + row.dataset.id); renderWater(); return; }
       if (row.classList.contains('order-row')) { toggleRow('order', row.dataset.id); renderOrders(); return; }
+      if (row.classList.contains('exceedance-row')) { toggleExceedance(row.dataset.levelId); return; }
     });
 
     document.addEventListener('change', function (event) {
@@ -1243,6 +1484,7 @@
         return;
       }
       if (scope === 'orders') { reloadView('orders'); return; }
+      if (scope === 'exceedances') { reloadView('exceedances'); return; }
       if (scope === 'water') { reloadView('water').then(updateWaterCounts); return; }
       if (scope === 'balance') { renderBalance(); }
     });
@@ -1330,6 +1572,7 @@
       state.flows.inflow = await api('GET', '/api/flows?kind=inflow');
       state.flows.release = await api('GET', '/api/flows?kind=release');
       state.orders = await api('GET', '/api/orders');
+      state.exceedances = await api('GET', '/api/exceedances' + exceedanceQuery());
     } catch (err) {
       showError(err);
     }
@@ -1340,6 +1583,7 @@
     renderOverview();
     renderReservoirs();
     renderWater();
+    renderExceedances();
     renderOrders();
     renderBalance();
   }

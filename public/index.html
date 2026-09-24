@@ -25,6 +25,7 @@
   <button type="button" class="tab is-active" data-view="overview">概览</button>
   <button type="button" class="tab" data-view="reservoirs">水库</button>
   <button type="button" class="tab" data-view="water">水位与流量</button>
+  <button type="button" class="tab" data-view="exceedances">超限处置</button>
   <button type="button" class="tab" data-view="orders">调度指令</button>
   <button type="button" class="tab" data-view="balance">水量平衡</button>
 </nav>
@@ -310,6 +311,39 @@
           </table>
         </div>
       </section>
+    </section>
+
+    <section class="view" data-view="exceedances">
+      <div class="view-head">
+        <div>
+          <h2>超限处置</h2>
+          <p class="view-sub">每一次超限都按水库与时刻单列：限水位、超出、判定依据、是否回落、处置状态全部取 <code>GET /api/exceedances</code> 字段。点一行展开：登记原因、处置措施、处置时刻与处置人，看处置前后水位对照与回落时刻，再登记复核。闭环 = 已登记处置 + 水位回落 + 已复核。</p>
+        </div>
+        <div class="view-actions">
+          <span class="pill" id="exceedanceCount">共 0 条</span>
+          <button type="button" class="btn btn-ghost" data-action="reload" data-view="exceedances">刷新</button>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table class="table" id="exceedanceTable">
+          <thead>
+            <tr>
+              <th>日期</th>
+              <th>时刻</th>
+              <th>水库</th>
+              <th class="num">水位</th>
+              <th class="num">限水位</th>
+              <th class="num">超出</th>
+              <th>判定依据</th>
+              <th>是否回落</th>
+              <th>处置状态</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="exceedanceRows"></tbody>
+        </table>
+      </div>
     </section>
 
     <section class="view" data-view="orders">

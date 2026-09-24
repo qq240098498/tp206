@@ -424,6 +424,86 @@
       "remark": ""
     },
     {
+      "id": "lev-0062",
+      "reservoirId": "res-0001",
+      "date": "2026-06-12",
+      "time": "08:00",
+      "level": 99.52,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0063",
+      "reservoirId": "res-0001",
+      "date": "2026-06-13",
+      "time": "08:00",
+      "level": 99.08,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0064",
+      "reservoirId": "res-0001",
+      "date": "2026-06-14",
+      "time": "08:00",
+      "level": 98.62,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0065",
+      "reservoirId": "res-0001",
+      "date": "2026-06-15",
+      "time": "08:00",
+      "level": 98.18,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0066",
+      "reservoirId": "res-0001",
+      "date": "2026-06-16",
+      "time": "08:00",
+      "level": 97.74,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0067",
+      "reservoirId": "res-0001",
+      "date": "2026-06-17",
+      "time": "08:00",
+      "level": 97.32,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0068",
+      "reservoirId": "res-0001",
+      "date": "2026-06-18",
+      "time": "08:00",
+      "level": 96.94,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0069",
+      "reservoirId": "res-0001",
+      "date": "2026-06-19",
+      "time": "08:00",
+      "level": 96.6,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
       "id": "lev-0033",
       "reservoirId": "res-0001",
       "date": "2026-09-08",
@@ -549,6 +629,56 @@
       "date": "2026-09-20",
       "time": "08:00",
       "level": 98.83,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0070",
+      "reservoirId": "res-0001",
+      "date": "2026-09-21",
+      "time": "08:00",
+      "level": 98.55,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0071",
+      "reservoirId": "res-0001",
+      "date": "2026-09-22",
+      "time": "08:00",
+      "level": 98.26,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0072",
+      "reservoirId": "res-0001",
+      "date": "2026-09-23",
+      "time": "08:00",
+      "level": 97.96,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0073",
+      "reservoirId": "res-0001",
+      "date": "2026-09-24",
+      "time": "08:00",
+      "level": 97.64,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0074",
+      "reservoirId": "res-0001",
+      "date": "2026-09-25",
+      "time": "08:00",
+      "level": 97.3,
       "source": "实测",
       "recorder": "值班员",
       "remark": ""
@@ -709,6 +839,86 @@
       "date": "2026-05-16",
       "time": "08:00",
       "level": 95.04,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0075",
+      "reservoirId": "res-0002",
+      "date": "2026-05-17",
+      "time": "08:00",
+      "level": 94.86,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0076",
+      "reservoirId": "res-0002",
+      "date": "2026-05-18",
+      "time": "08:00",
+      "level": 94.6,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0077",
+      "reservoirId": "res-0002",
+      "date": "2026-05-19",
+      "time": "08:00",
+      "level": 94.32,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0078",
+      "reservoirId": "res-0002",
+      "date": "2026-05-20",
+      "time": "08:00",
+      "level": 94.02,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0079",
+      "reservoirId": "res-0002",
+      "date": "2026-05-21",
+      "time": "08:00",
+      "level": 93.66,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0080",
+      "reservoirId": "res-0002",
+      "date": "2026-05-22",
+      "time": "08:00",
+      "level": 93.28,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0081",
+      "reservoirId": "res-0002",
+      "date": "2026-05-23",
+      "time": "08:00",
+      "level": 92.94,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0082",
+      "reservoirId": "res-0002",
+      "date": "2026-05-24",
+      "time": "08:00",
+      "level": 92.71,
       "source": "实测",
       "recorder": "值班员",
       "remark": ""
@@ -1818,6 +2028,80 @@
           "at": "2026-05-05"
         }
       ]
+    }
+  ],
+  "exceedances": [
+    {
+      "id": "exc-0001",
+      "levelId": "lev-0010",
+      "reservoirId": "res-0001",
+      "cause": "上游持续降雨，入库流量明显偏大",
+      "measures": "开启泄洪洞，下泄加大到 80 m³/s",
+      "handledAt": "2026-05-10 10:20",
+      "handler": "调度科 王启",
+      "reviewedBy": "总工 李澜",
+      "reviewedAt": "2026-06-19 09:00",
+      "reviewNote": "06-18 水位回落至汛限以下，处置有效，同意闭环"
+    },
+    {
+      "id": "exc-0002",
+      "levelId": "lev-0026",
+      "reservoirId": "res-0001",
+      "cause": "强降雨洪峰过境，库水位逼近 100 m",
+      "measures": "泄洪设施全开，预泄 200 m³/s，启动防汛Ⅲ级响应",
+      "handledAt": "2026-06-05 09:40",
+      "handler": "调度科 王启",
+      "reviewedBy": "总工 李澜",
+      "reviewedAt": "2026-06-19 10:00",
+      "reviewNote": "06-18 回落至 96.94 m，低于汛限，闭环"
+    },
+    {
+      "id": "exc-0003",
+      "levelId": "lev-0036",
+      "reservoirId": "res-0001",
+      "cause": "汛末蓄水偏多，回落偏慢",
+      "measures": "按 ZL-0003 指令加大发电与供水下泄",
+      "handledAt": "2026-09-11 14:00",
+      "handler": "调度科 赵敏",
+      "reviewedBy": "总工 李澜",
+      "reviewedAt": "2026-09-13 09:30",
+      "reviewNote": "水位在降但仍在汛限以上，继续泄放，回落后再确认"
+    },
+    {
+      "id": "exc-0004",
+      "levelId": "lev-0040",
+      "reservoirId": "res-0001",
+      "cause": "汛末持续高水位运行",
+      "measures": "继续按 ZL-0003 指令下泄，加密观测到每日两次",
+      "handledAt": "2026-09-15 16:00",
+      "handler": "调度科 赵敏",
+      "reviewedBy": "",
+      "reviewedAt": "",
+      "reviewNote": ""
+    },
+    {
+      "id": "exc-0005",
+      "levelId": "lev-0055",
+      "reservoirId": "res-0002",
+      "cause": "区间来水偏大，蓄水位超过汛限",
+      "measures": "加大灌溉供水与生态下泄至 40 m³/s",
+      "handledAt": "2026-05-10 11:00",
+      "handler": "白河站 陈果",
+      "reviewedBy": "",
+      "reviewedAt": "",
+      "reviewNote": ""
+    },
+    {
+      "id": "exc-0006",
+      "levelId": "lev-0074",
+      "reservoirId": "res-0001",
+      "cause": "123",
+      "measures": "123",
+      "handledAt": "2026-09-24 21:41",
+      "handler": "123",
+      "reviewedBy": "",
+      "reviewedAt": "",
+      "reviewNote": ""
     }
   ]
 }
